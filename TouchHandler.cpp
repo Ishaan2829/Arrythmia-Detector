@@ -3,6 +3,14 @@
 
 #include "TouchHandler.h"
 
+#define TOUCH_X_MIN 598
+#define TOUCH_X_MAX 3699
+#define TOUCH_Y_MIN 305
+#define TOUCH_Y_MAX 3718
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 320
+#define DEBOUNCE_TIME 100
+
 TouchHandler::TouchHandler(XPT2046_Touchscreen* touchscreen, Adafruit_ILI9341* display) : 
   ts(touchscreen), 
   tft(display),
@@ -26,9 +34,26 @@ TouchPoint TouchHandler::getTouch() {
     Serial.print(", Z=");
     Serial.println(p.z);
     
-    // Map touch coordinates to screen coordinates
-    point.x = map(p.x, TOUCH_MIN_X, TOUCH_MAX_X, 0, SCREEN_WIDTH);
-    point.y = map(p.y, TOUCH_MIN_Y, TOUCH_MAX_Y, 0, SCREEN_HEIGHT);
+    
+    int x = map(p.x, TOUCH_X_MAX, TOUCH_X_MIN, 0, SCREEN_WIDTH);
+    int y = map(p.y, TOUCH_Y_MAX, TOUCH_Y_MIN, 0, SCREEN_HEIGHT);
+
+    x = constrain(x, 0, SCREEN_WIDTH - 1);
+    y = constrain(y, 0, SCREEN_HEIGHT - 1);
+
+    Serial.print("Raw: X=");
+    Serial.print(p.x);
+    Serial.print(", Y=");
+    Serial.print(p.y);
+    Serial.print(" -> Mapped: X=");
+    Serial.print(x);
+    Serial.print(", Y=");
+    Serial.println(y);
+
+    point.x = x;
+    point.y = y;
+    point.touched = true;
+    lastTouchTime = millis();
     
     // Debug output - mapped values
     Serial.print("Mapped to: X=");
@@ -37,7 +62,7 @@ TouchPoint TouchHandler::getTouch() {
     Serial.print(point.y);
     
     // Calibrate if needed
-    calibratePoint(point.x, point.y);
+    //calibratePoint(point.x, point.y);
     
     // Debug output - final calibrated values
     Serial.print(" -> Final: X=");
